@@ -4,3 +4,4 @@ project(classifier)
 set(CMAKE_CXX_STANDARD 23)
 
 add_executable(classifier main.cpp)
+add_executable(nn_clf nn.cpp)
