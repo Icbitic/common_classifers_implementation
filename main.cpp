@@ -15,8 +15,8 @@ using namespace std;
 #define uint unsigned long long
 #define float64 double
 
-constexpr int inf = 0x3f3f3f3f;
-constexpr float64 PI = 3.1415926;
+constexpr int     inf = 0x3f3f3f3f;
+constexpr float64 PI  = 3.1415926;
 
 class Data {
 public:
@@ -35,7 +35,7 @@ public:
 
 class Dataset {
     valarray<Data> X;
-    valarray<int> y;
+    valarray<int>  y;
 
 public:
     Dataset() = default;
@@ -69,9 +69,9 @@ public:
 };
 
 class NearestNeighborClassifier : public Classifier {
-    int k;
+    int     k;
     Dataset dataset;
-    bool verbose;
+    bool    verbose;
 
 public:
     ~NearestNeighborClassifier() override = default;
@@ -87,12 +87,12 @@ public:
 
     int predict(const Data data) override {
         priority_queue<pair<float64, int> > candidates;
-        const uint siz = dataset.size();
 
+        const uint siz = dataset.size();
         for (int i = 0; i < siz; ++i) {
             auto [feature, label] = dataset.get(i);
-            float64 dis = euclid(data, feature);
 
+            float64 dis = euclid(data, feature);
             candidates.emplace(dis, label);
             if (candidates.size() > k)
                 candidates.pop();
@@ -121,8 +121,8 @@ public:
     }
 
     float64 accuracy(Dataset dataset) override {
-        uint siz = dataset.size();
-        int positive = 0;
+        uint siz      = dataset.size();
+        int  positive = 0;
         for (int i = 0; i < siz; ++i) {
             auto [k, v] = dataset.get(i);
             positive += predict(k) == v;
@@ -137,9 +137,9 @@ public:
 
 class LinearSVMClassifier : public Classifier {
     valarray<float64> weights; // Weight vector
-    float64 bias; // Bias term
-    float64 lr; // Learning rate
-    int epochs; // Number of training epochs
+    float64           bias;    // Bias term
+    float64           lr;      // Learning rate
+    int               epochs;  // Number of training epochs
 
     bool verbose;
 
@@ -152,17 +152,18 @@ public:
 
     void fit(Dataset dataset) override {
         uint n_features = 2; // Assume 2D data points
+
         weights = valarray<float64>(0.0, n_features);
 
         for (int epoch = 0; epoch < epochs; ++epoch) {
             for (int i = 0; i < dataset.size(); ++i) {
                 auto [data, label] = dataset.get(i);
-                valarray<float64> x = {data.x, data.y};
 
+                valarray<float64> x = {data.x, data.y};
                 // Convert label to {-1, 1}
                 int y = (label == 1) ? 1 : -1;
 
-                // Check for misclassification (y * (w * x + b) < 1)
+                // Check for mis-classification (y * (w * x + b) < 1)
                 if (y * (dot(weights, x) + bias) < 1) {
                     // Update weights and bias
                     weights += lr * (y * x);
@@ -183,8 +184,8 @@ public:
     }
 
     float64 accuracy(Dataset dataset) override {
-        uint siz = dataset.size();
-        int positive = 0;
+        uint siz      = dataset.size();
+        int  positive = 0;
         for (int i = 0; i < siz; ++i) {
             auto [k, v] = dataset.get(i);
             positive += predict(k) == v;
@@ -203,12 +204,12 @@ private:
 };
 
 class LinearSVMClassifierMultiLabel : public Classifier {
-    vector<valarray<float64> > weights; // Weight vectors for each label
-    vector<float64> biases; // Bias terms for each label
-    float64 lr; // Learning rate
-    int epochs; // Number of training epochs
-    int n_labels; // Number of unique labels
-    bool verbose;
+    vector<valarray<float64> > weights;  // Weight vectors for each label
+    vector<float64>            biases;   // Bias terms for each label
+    float64                    lr;       // Learning rate
+    int                        epochs;   // Number of training epochs
+    int                        n_labels; // Number of unique labels
+    bool                       verbose;
 
 public:
     ~LinearSVMClassifierMultiLabel() override = default;
@@ -220,22 +221,22 @@ public:
     void fit(Dataset dataset) override {
         // Determine the number of unique labels
         n_labels = find_max_label(dataset) + 1;
-
         // Initialize weight vectors and biases for each label
         uint n_features = 2; // Assume 2D data points
+
         weights = vector<valarray<float64> >(n_labels, valarray<float64>(0.0, n_features));
-        biases = vector<float64>(n_labels, 0.0);
+        biases  = vector<float64>(n_labels, 0.0);
 
         for (int epoch = 0; epoch < epochs; ++epoch) {
             for (int i = 0; i < dataset.size(); ++i) {
                 auto [data, label] = dataset.get(i);
-                valarray<float64> x = {data.x, data.y};
 
+                valarray<float64> x = {data.x, data.y};
                 for (int lbl = 0; lbl < n_labels; ++lbl) {
                     // Convert label to {-1, 1} (one-vs-rest)
                     int y = (label == lbl) ? 1 : -1;
 
-                    // Check for misclassification (y * (w * x + b) < 1)
+                    // Check for mis-classification (y * (w * x + b) < 1)
                     if (y * (dot(weights[lbl], x) + biases[lbl]) < 1) {
                         // Update weights and bias
                         weights[lbl] += lr * (y * x);
@@ -248,9 +249,9 @@ public:
 
     int predict(Data data) override {
         valarray<float64> x = {data.x, data.y};
-        float64 best_score = -inf;
-        int best_label = -1;
 
+        float64 best_score = -inf;
+        int     best_label = -1;
         // Calculate decision function for each label and pick the label with the highest score
         for (int lbl = 0; lbl < n_labels; ++lbl) {
             float64 score = dot(weights[lbl], x) + biases[lbl];
@@ -268,8 +269,8 @@ public:
     }
 
     float64 accuracy(Dataset dataset) override {
-        uint siz = dataset.size();
-        int positive = 0;
+        uint siz      = dataset.size();
+        int  positive = 0;
         for (int i = 0; i < siz; ++i) {
             auto [k, v] = dataset.get(i);
             positive += predict(k) == v;
@@ -301,13 +302,13 @@ private:
 
 class NeuralNetworkClassifier : public Classifier {
     vector<valarray<float64> > W1; // Weights for input -> hidden layer
-    valarray<float64> b1; // Biases for hidden layer
+    valarray<float64>          b1; // Biases for hidden layer
     vector<valarray<float64> > W2; // Weights for hidden -> output layer
-    valarray<float64> b2; // Biases for output layer
-    int n_labels;
-    int n_hidden; // Number of hidden units
-    float64 lr; // Learning rate
-    int epochs; // Number of training epochs
+    valarray<float64>          b2; // Biases for output layer
+    int                        n_labels;
+    int                        n_hidden; // Number of hidden units
+    float64                    lr;       // Learning rate
+    int                        epochs;   // Number of training epochs
 
     bool verbose;
 
@@ -321,6 +322,7 @@ public:
     void fit(Dataset dataset) override {
         // Determine the number of unique labels
         n_labels = find_max_label(dataset) + 1;
+
         int n_features = 2; // Assume 2D data points
 
         // Initialize weights and biases
@@ -330,8 +332,8 @@ public:
         for (int epoch = 0; epoch < epochs; ++epoch) {
             for (int i = 0; i < dataset.size(); ++i) {
                 auto [data, label] = dataset.get(i);
-                valarray<float64> x = {data.x, data.y};
 
+                valarray<float64> x = {data.x, data.y};
                 // Forward pass
                 auto [h, o] = forward(x);
 
@@ -356,8 +358,8 @@ public:
     }
 
     float64 accuracy(Dataset dataset) override {
-        uint siz = dataset.size();
-        int positive = 0;
+        uint siz      = dataset.size();
+        int  positive = 0;
         for (int i = 0; i < siz; ++i) {
             auto [k, v] = dataset.get(i);
             positive += predict(k) == v;
@@ -371,21 +373,21 @@ public:
 
 private:
     void initialize_weights(int n_features) {
-        random_device rd;
-        mt19937 gen(rd());
-        normal_distribution<float64> dist(0, 1);
+        random_device         rd;
+        mt19937               gen(rd());
+        normal_distribution<> dist(0, 1);
 
         // Initialize weights and biases for input -> hidden layer
-        W1 = vector<valarray<float64> >(n_hidden, valarray<float64>(n_features));
+        W1 = vector(n_hidden, valarray<float64>(n_features));
         for (auto &w: W1)
             generate(begin(w), end(w), [&]() { return dist(gen); });
-        b1 = valarray<float64>(0.0, n_hidden);
+        b1 = valarray(0.0, n_hidden);
 
         // Initialize weights and biases for hidden -> output layer
-        W2 = vector<valarray<float64> >(n_labels, valarray<float64>(n_hidden));
+        W2 = vector(n_labels, valarray<float64>(n_hidden));
         for (auto &w: W2)
             generate(begin(w), end(w), [&]() { return dist(gen); });
-        b2 = valarray<float64>(0.0, n_labels);
+        b2 = valarray(0.0, n_labels);
     }
 
     pair<valarray<float64>, valarray<float64> > forward(const valarray<float64> &x) {
@@ -469,31 +471,34 @@ signed main() {
     cin.tie(nullptr);
     cout.tie(nullptr);
 
-    int siz = 5000;
+    int            siz = 5000;
     valarray<Data> X(siz);
-    valarray<int> y(siz);
+    valarray<int>  y(siz);
 
-    random_device dev;
-    mt19937 rng(dev());
+    random_device             dev;
+    mt19937                   rng(dev());
     uniform_real_distribution real_dist(0.0, 1.0);
 
     float64 max_radius = 1.5;
     for (int i = 0; i < siz / 3; ++i) {
         float64 radius = real_dist(rng) * max_radius;
-        float64 angle = real_dist(rng) * 2 * PI;
+        float64 angle  = real_dist(rng) * 2 * PI;
+
         X[i] = {-1.0 + cos(angle) * radius, 0.0 + sin(angle) * radius};
         y[i] = 0;
     }
     for (int i = siz / 3; i < 2 * siz / 3; ++i) {
         float64 radius = real_dist(rng) * max_radius;
-        float64 angle = real_dist(rng) * 2 * PI;
+        float64 angle  = real_dist(rng) * 2 * PI;
+
         X[i] = {1.0 + cos(angle) * radius, 0.0 + sin(angle) * radius};
         y[i] = 1;
     }
 
     for (int i = 2 * siz / 3; i < siz; ++i) {
         float64 radius = real_dist(rng) * max_radius;
-        float64 angle = real_dist(rng) * 2 * PI;
+        float64 angle  = real_dist(rng) * 2 * PI;
+
         X[i] = {0.0 + cos(angle) * radius, 2.0 + sin(angle) * radius};
         y[i] = 2;
     }
@@ -510,8 +515,8 @@ signed main() {
         swap(y[i], y[idx]);
     }
 
-    float64 split = 0.8;
-    size_t split_idx = siz * split; // NOLINT(*-narrowing-conversions)
+    float64 split     = 0.8;
+    size_t  split_idx = siz * split; // NOLINT(*-narrowing-conversions)
     Dataset train_set(X[slice(0, split_idx, 1)],
                       y[slice(0, split_idx, 1)]);
 
